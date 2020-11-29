@@ -60,12 +60,12 @@ async function main() {
     });
 
     function getMessage(user,message) {
-        if(message.toLowerCase().search(/(^|\s)(hol((a($|s*))|(i(ta)?s*)))|((k|(qu))e tal)|wena+s+|buena+s+|(buen(os)? d(í|i)as+)(\s|$)/g)>=0){
+        if(message.toLowerCase().search(/(^|\s)(hol((a($|s*))|(i(ta)?s*)))|((k|(qu))e tal)|wena+s+|(buen((a|o)+s*)?( ((d(í|i)a)|tarde|noche)s*)?)(\s|$)/g)>=0){
             if(!greetUsers.includes(user)){
                 greetUsers.push(user);
                 return `¡Hola ${user}! Espero disfrutes el stream ❤︎ ❤︎ ❤︎`;
             }
-        }else if(message.toLowerCase().search(/(^!eileen reset$)/g)>=0){
+        }else if(user=="satokito" && message.toLowerCase().search(/(^!eileen reset$)/g)>=0){
             greetUsers=[]
             return 'Estamos listos para iniciar ❤︎ ! ';
         }else{
