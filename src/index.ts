@@ -1,25 +1,15 @@
 import { ChatClient } from 'twitch-chat-client';
 import { RefreshableAuthProvider, StaticAuthProvider } from 'twitch-auth';
 import { promises as fs } from 'fs';
+import { util } from 'chai';
+import {config} from './util/configuration';
+
 require('dotenv').config();
-
+const messages_order={
+    'social':[...Array(config.messages['social'].length).keys()],
+    'greet':[...Array(config.messages['social'].length).keys()]
+};
 async function main() {
-    const socialMessageMinutes=15;
-
-    const messages={
-        'social':[
-                '¡Holi! No olvides seguir a Satokito en twitter https://twitter.com/Satokito y en instagram https://www.instagram.com/cartulain ❤︎ ❤︎ ❤︎',
-                '¿Ya sigues a Satokito en sus redes? Síguela en twitter https://twitter.com/Satokito y en instagram https://www.instagram.com/cartulain ❤︎ ❤︎ ❤︎',
-                'Sigue a Satokito en facebook https://www.facebook.com/Satokitoplz ❤︎ ❤︎ ❤︎'
-                ],
-        'greet':[
-
-            ]
-    };
-    const messages_order={
-        'social':[...Array(messages['social'].length).keys()],
-        'greet':[...Array(messages['social'].length).keys()]
-    }
     let greetUsers=[];
     const clientId = process.env.CLIENT_ID
     const clientSecret = process.env.CLIENT_SECRET
@@ -41,7 +31,7 @@ async function main() {
         }
     );
 
-    const chatClient = new ChatClient(auth, { channels: ['satokito'] });
+    const chatClient = new ChatClient(auth, { channels: config.chatClient });
     await chatClient.connect();
     let messageCount=0;
     let lastDate=new Date(0);
@@ -49,25 +39,46 @@ async function main() {
         let messageDate=new Date();
         let new_message=getMessage(user,message);
         if (new_message) {
-            chatClient.say(channel, new_message);
+            if(Array.isArray(new_message)){
+                for (let message of new_message){
+                    chatClient.say(channel, message);
+                }
+            }else{
+                chatClient.say(channel, new_message);
+            }
         }
-        if((messageDate.getTime()-lastDate.getTime())>60000*socialMessageMinutes){
+        if((messageDate.getTime()-lastDate.getTime())>60000*config.socialMessageMinutes){
             let next_message=messages_order['social'].shift();
             messages_order['social'].push(next_message);
-            chatClient.say(channel, messages['social'][next_message]);
+            chatClient.say(channel, config.messages['social'][next_message]);
             lastDate=new Date();
         }
     });
 
     function getMessage(user,message) {
-        if(message.toLowerCase().search(/(^|\s)(hol((a($|s*))|(i(ta)?s*)))|((k|(qu))e tal)|wena+s+|(buen((a|o)+s*)?( ((d(í|i)a)|tarde|noche)s*)?)(\s|$)/g)>=0){
+        if(message.toLowerCase().search(config.regexDict.greet)>=0){
             if(!greetUsers.includes(user)){
                 greetUsers.push(user);
                 return `¡Hola ${user}! Espero disfrutes el stream ❤︎ ❤︎ ❤︎`;
             }
-        }else if(user=="satokito" && message.toLowerCase().search(/(^!eileen reset$)/g)>=0){
+
+        }else if(message.toLowerCase().search(config.regexDict.twitter)>=0){
+            return 'Sigue a Satokito en twitter https://twitter.com/Satokito ❤︎ ❤︎ ❤︎'
+        }else if(message.toLowerCase().search(config.regexDict.facebook)>=0){
+            return 'Sigue a Satokito en facebook https://www.facebook.com/Satokitoplz ❤︎ ❤︎ ❤︎'
+        }else if(message.toLowerCase().search(config.regexDict.instagram)>=0){
+            return 'Sigue a Satokito en instagram https://www.instagram.com/cartulain ❤︎ ❤︎ ❤︎'
+        }else if(config.allowedUsers.includes(user) && message.toLowerCase()=='!start'){
             greetUsers=[]
             return 'Estamos listos para iniciar ❤︎ ! ';
+        }else if(config.allowedUsers.includes(user)&&message.toLowerCase().search(/^!raid\s/g)>=0){ //raid someone
+            let user_to_raid=message.split(' ')[1].toLowerCase();
+            return [`Let's raid ${user_to_raid} !!!`,`/raid ${user_to_raid}`];
+        }else if(config.allowedUsers.includes(user)&&message.toLowerCase().search(/^!so\s/g)>=0){ //raid someone
+            let user_shoutout=message.split(' ')[1];
+            return `Visiten a ${user_shoutout} en su canal https://www.twitch.tv/${user_shoutout.toLowerCase()} y denle mucho amor ❤︎ ❤︎ ❤︎`;
+        }else if(!config.allowedUsers.includes(user)&&message.toLowerCase().search(config.regexDict.url)>=0){ //Links deletion
+            return 'No uses links, gracias ❤︎ !';
         }else{
             return false;
         }
