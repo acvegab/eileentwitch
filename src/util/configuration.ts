@@ -2,7 +2,9 @@ export const config = {
     'chatClient':['satokito','cartulain'],
     'socialMessageMinutes':15,
     'allowedUsers':[
-        'satokito'
+        'eileenpure',
+        'satokito',
+        'cartulain'
     ],
     'messages':{
         'social':[
@@ -19,6 +21,7 @@ export const config = {
         'twitter':/(^!tw(itter)?$)/g,
         'facebook':/(^!f(acebook|b)$)/g,
         'instagram':/(^!i(nstagram|g)$)/g,
+        'discord':/(^!discord$)/g,
         'url':/((http|ftp|https):\/\/)?([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])?/g,
     }
 };
