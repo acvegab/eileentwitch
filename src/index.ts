@@ -1,16 +1,17 @@
-import { ChatClient, ChatUser } from 'twitch-chat-client';
+import { ChatClient } from 'twitch-chat-client';
 import { RefreshableAuthProvider, StaticAuthProvider } from 'twitch-auth';
 import { promises as fs } from 'fs';
 import { util } from 'chai';
 import {config} from './util/configuration';
 import {Bot} from "./bot";
-
+// import {subscribePubSub} from './pubsub';
+import { ApiClient } from 'twitch';
 require('dotenv').config();
 async function main() {
     const clientId = process.env.CLIENT_ID
     const clientSecret = process.env.CLIENT_SECRET
-    const tokenData = JSON.parse(await fs.readFile('tokens.json'));
-    const auth = new RefreshableAuthProvider(
+    const tokenData = JSON.parse((await fs.readFile('tokens.json')).toString());
+    const authProvider = new RefreshableAuthProvider(
         new StaticAuthProvider(clientId, tokenData.accessToken),
         {
             clientSecret,
@@ -26,7 +27,10 @@ async function main() {
             }
         }
     );
-    const chatClient = new ChatClient(auth, { channels: config.chatClient });
+    const apiClient = new ApiClient({ authProvider });
+    // await subscribePubSub(apiClient);
+
+    const chatClient = new ChatClient(authProvider, { channels: config.chatClient });
     await chatClient.connect();
     let eileen = new Bot();
     chatClient.onMessage((channel, user, message) => {
